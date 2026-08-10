@@ -1,3 +1,4 @@
+using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -5,24 +6,30 @@ using UnityEngine.InputSystem;
 
 public class playerController : MonoBehaviour
 {
-    [SerializeField] InputActionReference Move, Sprint, Interact;
+    [SerializeField] InputActionReference Move, Sprint, Interact, Jump;
+    [SerializeField] LayerMask interactionLayer, floorLayer;
     [SerializeField] float moveSpeed;
     [SerializeField] float sprintModifier;
     [SerializeField] float interactionRange;
-    [SerializeField] LayerMask interactionLayer;
+    [SerializeField] float cameraBobBounds, cameraBobSpeed, sprintBobModifier;
+    [SerializeField] float jumpStrength;
+    [SerializeField] bool isJumping;
 
-
+    private CharacterController controller;
     private GameObject currentHighlightedObject;
     private Camera camera;
-    CharacterController controller;
-    private float targetSpeed;
     private Vector2 Dir;
-    private bool sprintPressed;
+    private float cameraInitPosY, targetCameraBobSpeed;
+    private float targetSpeed;
+    private bool sprintPressed,isMoving;
+    private bool jumpPressed;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         controller = GetComponent<CharacterController>();
         camera = Camera.main;
+        cameraInitPosY = camera.transform.localPosition.y;
+        controller.attachedRigidbody.useGravity = true;
     }
 
     // Update is called once per frame
@@ -30,21 +37,59 @@ public class playerController : MonoBehaviour
     {
         Dir = Move.action.ReadValue<Vector2>();
 
-        sprintPressed = Sprint.action.ReadValue<float>() > 0.5f ? true : false;
-        
-        sprintCheck();
-        
+        isJumping = !Physics.Raycast(camera.transform.position, Vector3.down, 1.9f,floorLayer);
 
-        Vector3 targetDir = ((this.transform.forward * Dir.y + this.transform.right * Dir.x) * targetSpeed) * Time.deltaTime;
+        jumpPressed = Jump.action.WasPressedThisFrame();
+
+        isMoving = Mathf.Abs(controller.velocity.x + controller.velocity.y + controller.velocity.z) >= 0.01f ? true : false;
+
+        jumpCheck();
+
+        sprintCheck();
+
+        cameraBob();
+
+        interaction();
+
+        Vector3 targetDir = ((this.transform.forward * Dir.y + this.transform.right * Dir.x -this.transform.up * 2.0f) * targetSpeed) * Time.deltaTime;
         Vector3 moveDir = Vector3.zero;
         
         moveDir = Vector3.Lerp(moveDir, targetDir,0.7f);
         controller.Move(moveDir);
 
 
-        interaction();
 
     }
+
+
+
+    void jumpCheck()
+    {
+        if (jumpPressed && !isJumping)
+        {
+            //controller.Move(Vector3.up * jumpStrength);
+            StartCoroutine(jumpThread());
+        }
+        else if (isJumping)
+        {
+           
+        }
+    }
+
+    private IEnumerator jumpThread()
+    {
+        Vector3 jumpAmount = Vector3.zero;
+        Vector3 targetJump = Vector3.up * jumpStrength;
+        float timeStart = Time.time;
+        while (Time.time < timeStart + 0.2f /*|| (isJumping && Time.time < timeStart + 0.03f)*/)
+        {
+            jumpAmount = Vector3.Lerp(jumpAmount, targetJump, 0.7f);
+            controller.Move(jumpAmount * Time.deltaTime);
+            yield return new WaitForEndOfFrame();
+        }
+        
+    }
+
 
     void interaction()
     {
@@ -67,18 +112,31 @@ public class playerController : MonoBehaviour
     }
 
 
-    void sprintCheck()
+
+    void cameraBob()
     {
-        if (sprintPressed)
+        float newCameraPos;
+        if (isMoving && !isJumping)
         {
-            targetSpeed = moveSpeed * sprintModifier;
+            newCameraPos = cameraInitPosY + Mathf.Sin(Time.time * targetCameraBobSpeed) * cameraBobBounds;
         }
         else
         {
-            targetSpeed = moveSpeed;
+            newCameraPos= cameraInitPosY;
         }
+
+        camera.transform.localPosition = Vector3.Lerp(camera.transform.localPosition, new Vector3(camera.transform.localPosition.x, newCameraPos, camera.transform.localPosition.z), 0.1f);
     }
 
+
+    void sprintCheck()
+    {
+        sprintPressed = Sprint.action.ReadValue<float>() >= 0.5f ? true : false;
+
+        targetSpeed = sprintPressed ? moveSpeed * sprintModifier : moveSpeed;
+
+        targetCameraBobSpeed = sprintPressed ? cameraBobSpeed * sprintBobModifier : cameraBobSpeed;
+    }
 
     //private void OnDrawGizmos()
     //{

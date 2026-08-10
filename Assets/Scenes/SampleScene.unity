@@ -14643,7 +14643,7 @@ GameObject:
   - component: {fileID: 1154974087}
   - component: {fileID: 1154974086}
   - component: {fileID: 1154974085}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Plane (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15935,7 +15935,7 @@ GameObject:
   - component: {fileID: 1468015915}
   - component: {fileID: 1468015914}
   - component: {fileID: 1468015913}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Plane
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17340,12 +17340,21 @@ MonoBehaviour:
   Move: {fileID: -1680190386980627800, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   Sprint: {fileID: -7471211009204490832, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   Interact: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  moveSpeed: 7.5
-  sprintModifier: 1.4
-  interactionRange: 1.4
+  Jump: {fileID: -2099379676528639254, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   interactionLayer:
     serializedVersion: 2
     m_Bits: 8
+  floorLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  moveSpeed: 7.5
+  sprintModifier: 1.4
+  interactionRange: 1.4
+  cameraBobBounds: 0.07
+  cameraBobSpeed: 15
+  sprintBobModifier: 1.3
+  jumpStrength: 14
+  isJumping: 0
 --- !u!136 &1741412316
 CapsuleCollider:
   m_ObjectHideFlags: 0
